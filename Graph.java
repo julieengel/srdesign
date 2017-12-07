@@ -1,12 +1,22 @@
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+
+
+// TO-DO: generateSTs()
 
 class Graph {
 	private int[][] am;
 	private int n;
 	private int m;
+	private Set<Edge> edges;
 	
 	public Graph (int n) {
 		this.n = n;
@@ -29,7 +39,6 @@ class Graph {
                 }
             }
         }
-        
         // Confirm that each vertex has degree >= 2
         for (int i = 0; i < n; i++) {
         		int count = 0;
@@ -47,6 +56,11 @@ class Graph {
         			count++;
         		}
         }
+        
+        // CONFIRM THAT IT'S CONNECTED
+        
+        makeEdgeSet();
+        
 	}
 	
 	void addEdge(int u, int v, int w) {
@@ -101,7 +115,7 @@ class Graph {
 		}
 	}
 	
-	int[][] kruskals() {
+	Graph kruskals() {
 		// Create MST structure
 		int[][] mst = new int[n][n];
 		int edgeCount = 0;
@@ -111,7 +125,8 @@ class Graph {
         for (int i = 0; i < n; i++) {
         		for (int j = i + 1; j < n; j++) {
         			if (am[i][j] > 0) {
-        				pq.add(new Edge(i, j, am[i][j]));
+        				Edge e = new Edge(i, j, am[i][j]);
+        				pq.add(e);
         			}
         		}
         }
@@ -130,20 +145,81 @@ class Graph {
                 // weight += e.weight();
             }
         }
-        return mst;
+        Graph mstGraph = new Graph(mst);
+        mstGraph.makeEdgeSet();
+        return mstGraph;
 
         // check optimality conditions
         //assert check(G);
     }
 	
+	boolean isConnected() {
+		boolean[] seen = new boolean[n];
+		Queue<Integer> queue = new LinkedList<Integer>();
+		queue.add(0);
+		seen[0] = true;
+		while (!queue.isEmpty()) {
+			int curr = queue.remove();
+			for (int j = 0; j < n; j++) {
+				if (am[curr][j] != 0 && !seen[j]) {
+					queue.add(j);
+					seen[j] = true;
+				}
+			}
+		}
+		for (int i = 0; i < n; i++) {
+			if (!seen[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	Set<Graph> generateSTs() {
+		Set<Graph> sts = new HashSet<Graph>();
+		Map<Edge, Boolean> removedEdges = new HashMap<Edge, Boolean>();
+		while (!allRemoved(removedEdges)) {
+			Graph st = kruskals();
+			// Need to mark all of the edges NOT in ST as removed
+		}
+		
+		
+		return sts;
+	}
+	
+	public void makeEdgeSet() {
+		edges = new HashSet<Edge>();
+		for (int i = 0; i < n; i++) {
+	    		for (int j = i + 1; j < n; j++) {
+	    			if (am[i][j] > 0) {
+	    				Edge e = new Edge(i, j, am[i][j]);
+	    				edges.add(e); // NOTE: random edge weights assigned?
+	    			}
+	    		}
+		}
+	}
+	
+	boolean allRemoved(Map<Edge, Boolean> removedEdges) {
+		for (Edge e : removedEdges.keySet()) {
+			if (!removedEdges.get(e)) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	
+
+	
 	
 	public static void main(String[] args) {
 		Graph g = new Graph(5);
 		g.randomize(.5);
-		g.assignRandomWeights();
+		//g.assignRandomWeights();
 		g.printGraphMatrix();
-		Graph mst = new Graph(g.kruskals());
-		mst.printGraphMatrix();
+		System.out.println(g.isConnected());
+//		Graph mst = new Graph(g.kruskals());
+//		mst.printGraphMatrix();
 	}
 	
 
