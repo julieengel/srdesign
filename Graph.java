@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-
+import java.lang.Math;
 
 // TO-DO: generateSTs()
 
@@ -26,6 +26,7 @@ class Graph {
 	public Graph (int[][] am) {
 		this.am = am;
 		this.n = am.length;
+		makeEdgeSet();
 	}
 	
 	void randomize(double p) {
@@ -60,7 +61,6 @@ class Graph {
         // CONFIRM THAT IT'S CONNECTED
         
         makeEdgeSet();
-        
 	}
 	
 	void addEdge(int u, int v, int w) {
@@ -174,13 +174,80 @@ class Graph {
 		}
 		return true;
 	}
-	
+
+	// isa start
+	void removeEdge(Edge e) {
+	    if (edges.contains(e)) {
+            am[e.getU()][e.getV()] = 0;
+            am[e.getV()][e.getU()] = 0;
+            edges.remove(e);
+        }
+    }
+
+    void addEdge(Edge e) {
+	    addEdge(e.getU(), e.getV(), e.getEdgeWeight());
+	    edges.add(e);
+    }
+
+	Set<Edge> getEdgeSet() {
+	    return edges;
+    }
+
+	Graph subtractGraph(Graph g) {
+	    Graph subtraction = new Graph(am);
+	    for (Edge e : g.getEdgeSet()) {
+	        subtraction.removeEdge(e);
+        }
+        return subtraction;
+    }
+
+    Set<Edge> getNotRemoved(Map<Edge, Boolean> removed) {
+	    Set<Edge> notRemoved = new HashSet<Edge>();
+	    for (Edge e : removed.keySet()) {
+	        if (!removed.get(e)) { notRemoved.add(e); }
+        }
+        return notRemoved;
+    }
+
 	Set<Graph> generateSTs() {
 		Set<Graph> sts = new HashSet<Graph>();
 		Map<Edge, Boolean> removedEdges = new HashMap<Edge, Boolean>();
+		
+		// Add all edges to map and init to false
+		for (Edge e : edges) {
+		    removedEdges.put(e, false);
+        }
+		
+		Graph curr = this;
 		while (!allRemoved(removedEdges)) {
-			Graph st = kruskals();
-			// Need to mark all of the edges NOT in ST as removed
+			Graph st = curr.kruskals();
+			sts.add(st);
+			Graph complement = subtractGraph(st); // ORIG - KRUSKALS
+			for (Edge e : complement.getEdgeSet()) {
+                // Need to mark all of the edges NOT in ST as removed
+			    removedEdges.put(e, true);
+            }
+
+            if (!complement.isConnected()) {
+            		// Want to add edges back from the ST
+            	
+			    // we want to do a check of if there are only like 2-4 (idk if thats a good number) edges left
+                Set<Edge> notRemoved = getNotRemoved(removedEdges); // Get all of the edges that haven't been removed
+
+                // THIS HAS POTENTIAL FOR INFINITE LOOP, NO BUENO
+			    while (!complement.isConnected()) {
+			        // TODO: change this from random to edges that connect
+                    int index = (int) (Math.random() * st.getEdgeSet().size()); // Add back random edge from the ST
+                    Edge toAdd = (Edge) st.getEdgeSet().toArray()[index];
+                    if (notRemoved.size() > 4 || !notRemoved.contains(toAdd) ) {
+                        complement.addEdge(toAdd);
+                    }
+                    
+                }
+            } // else add to set and return bc done?
+
+            curr = complement;
+
 		}
 		
 		
@@ -208,19 +275,19 @@ class Graph {
 		return true;
 	}
 	
-	
 
-	
-	
-	public static void main(String[] args) {
-		Graph g = new Graph(5);
-		g.randomize(.5);
-		//g.assignRandomWeights();
-		g.printGraphMatrix();
-		System.out.println(g.isConnected());
+
+
+
+    public static void main(String[] args) {
+        Graph g = new Graph(5);
+        g.randomize(.5);
+        g.assignRandomWeights();
+        g.printGraphMatrix();
+        System.out.println(g.isConnected());
 //		Graph mst = new Graph(g.kruskals());
 //		mst.printGraphMatrix();
-	}
+    }
 	
 
 	
