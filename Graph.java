@@ -5,7 +5,6 @@ import java.util.Queue;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.lang.Math;
@@ -19,14 +18,20 @@ class Graph {
 	private Set<Edge> edges;
 	
 	public Graph (int n) {
+		// INITIALIZES EMPTY GRAPH
 		this.n = n;
 		am = new int[n][n];
+		// HAVE TO CALL RANDOMIZE IN ORDER TO ACTUALLY GET EDGES
 	}
 	
 	public Graph (int[][] am) {
 		this.am = am;
 		this.n = am.length;
 		makeEdgeSet();
+	}
+	
+	public void setEdges(Set<Edge> es) {
+		edges = es;
 	}
 	
 	void randomize(double p) {
@@ -177,11 +182,11 @@ class Graph {
 
 	// isa start
 	void removeEdge(Edge e) {
-	    if (edges.contains(e)) {
-            am[e.getU()][e.getV()] = 0;
-            am[e.getV()][e.getU()] = 0;
-            edges.remove(e);
-        }
+		//if (edges.contains(e)) {
+	        am[e.getU()][e.getV()] = 0;
+	        am[e.getV()][e.getU()] = 0;
+	        edges.remove(e); // This might not work b/c different references
+		//}
     }
 
     void addEdge(Edge e) {
@@ -210,47 +215,75 @@ class Graph {
     }
 
 	Set<Graph> generateSTs() {
-		Set<Graph> sts = new HashSet<Graph>();
-		Map<Edge, Boolean> removedEdges = new HashMap<Edge, Boolean>();
+		Set<Graph> sts = new HashSet<Graph>(); // Might not all be STs in the case where the complement works 
+		Set<Edge> notRemovedEdges = new HashSet<Edge>();
 		
-		// Add all edges to map and init to false
+		// Originally, no edges have been seen so add them all to the set
 		for (Edge e : edges) {
-		    removedEdges.put(e, false);
+		    notRemovedEdges.add(e);
         }
+		Graph curr = new Graph(am);
+		// Generate the first ST
+		Graph firstST = curr.kruskals();
+		System.out.println("FIRST ST--------");
+		firstST.printGraphMatrix();
+		System.out.println();
+		sts.add(firstST);
 		
-		Graph curr = this;
-		while (!allRemoved(removedEdges)) {
-			Graph st = curr.kruskals();
-			sts.add(st);
-			Graph complement = subtractGraph(st); // ORIG - KRUSKALS
-			for (Edge e : complement.getEdgeSet()) {
-                // Need to mark all of the edges NOT in ST as removed
-			    removedEdges.put(e, true);
-            }
-
-            if (!complement.isConnected()) {
-            		// Want to add edges back from the ST
-            	
-			    // we want to do a check of if there are only like 2-4 (idk if thats a good number) edges left
-                Set<Edge> notRemoved = getNotRemoved(removedEdges); // Get all of the edges that haven't been removed
-
-                // THIS HAS POTENTIAL FOR INFINITE LOOP, NO BUENO
-			    while (!complement.isConnected()) {
-			        // TODO: change this from random to edges that connect
-                    int index = (int) (Math.random() * st.getEdgeSet().size()); // Add back random edge from the ST
-                    Edge toAdd = (Edge) st.getEdgeSet().toArray()[index];
-                    if (notRemoved.size() > 4 || !notRemoved.contains(toAdd) ) {
-                        complement.addEdge(toAdd);
-                    }
-                    
-                }
-            } // else add to set and return bc done?
-
-            curr = complement;
-
+//		Graph firstComplement = curr.subtractGraph(firstST);
+		
+		Graph firstComplement = new Graph(am);
+		System.out.println("firstComplement original edges = " + firstComplement.getEdgeSet().size());
+		for (Edge e : firstST.getEdgeSet()) {
+			firstComplement.removeEdge(e);
 		}
 		
+		System.out.println("FIRST COMPLEMENT--------");
+		firstComplement.printGraphMatrix();
+		System.out.println();
+		for (Edge e : firstComplement.getEdgeSet()) {
+			// All of the edges not in the ST have been removed
+			notRemovedEdges.remove(e);
+		}
 		
+		// While there are still things that haven't been removed
+		while (!notRemovedEdges.isEmpty()) {
+			// Make copy of original graph to modify
+			curr = new Graph(am);
+			
+			// Remove all not yet removed edges from the original graph and see if it connects
+			for (Edge e : notRemovedEdges) {
+				curr.removeEdge(e);
+			}
+
+			// Initialize a union-find structure
+			UF uf = new UF(n);
+			// System.out.println("numComps before = " + uf.count());
+			// Union components that have edges
+			for (Edge e : curr.getEdgeSet()) {
+				uf.union(e.getU(), e.getV());
+			}
+			// System.out.println("numComps after = " + uf.count());
+			
+			while (uf.count() != 1) { // POTENTIAL INFINITE LOOP IF IT DOESN'T WORK
+				// A	dd back edges
+				int index = (int) (Math.random() * notRemovedEdges.size()); // Add back random edge from the ST, but NO GUARANTEE THEY ALL GET PICKED?
+				Edge e = (Edge) notRemovedEdges.toArray()[index];
+				int u = e.getU();
+				int v = e.getV();
+				if (!uf.connected(u, v)) { // u-v does not create a cycle
+					uf.union(u, v);  // merge u and v components
+					curr.addEdge(e);
+	            }
+			}
+			
+			sts.add(curr);
+			Graph complement = subtractGraph(curr);
+			for (Edge e : complement.getEdgeSet()) {
+				// All of the edges not in the ST have been removed
+				notRemovedEdges.remove(e);
+			}
+		}
 		return sts;
 	}
 	
@@ -282,9 +315,16 @@ class Graph {
     public static void main(String[] args) {
         Graph g = new Graph(5);
         g.randomize(.5);
-        g.assignRandomWeights();
+        //g.assignRandomWeights();
         g.printGraphMatrix();
-        System.out.println(g.isConnected());
+        System.out.println();
+        System.out.println();
+        Set<Graph> sts = g.generateSTs();
+        for (Graph gr : sts) {
+        		gr.printGraphMatrix();
+        		System.out.println();
+        }
+        //System.out.println(g.isConnected());
 //		Graph mst = new Graph(g.kruskals());
 //		mst.printGraphMatrix();
     }
@@ -327,6 +367,33 @@ class Graph {
 				return -1;
 			}
 		}
+		
+		@Override
+	    public boolean equals(Object o) {
+			// ISSUE: DOESNT GET CALLED BY CONTAINS()
+			
+			
+			System.out.println("EQUALS");
+	        // If the object is compared with itself then return true  
+	        if (o == this) {
+	            return true;
+	        }
+	 
+	        /* Check if o is an instance of Complex or not
+	          "null instanceof [type]" also returns false */
+	        if (!(o instanceof Edge)) {
+	            return false;
+	        }
+	         
+	        // typecast o to Complex so that we can compare data members 
+	        Edge e = (Edge) o;
+	         
+	        // Compare the data members and return accordingly
+	        System.out.println("U: " + this.u + " " + e.u);
+	        System.out.println("V: " + this.v + " " + e.v);
+	        System.out.println("W: " + this.w + " " + e.w);
+	        return (this.u == e.u) && (this.v == e.v) && (this.w == e.w);
+	    }
 	}
 	
 	private class UF {
