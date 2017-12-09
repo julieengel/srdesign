@@ -16,6 +16,7 @@ class Graph {
     private int n;
     private int m;
     private Set<Edge> edges;
+    GraphVis gv;
 
     public Graph (int n) {
         // INITIALIZES EMPTY GRAPH
@@ -337,6 +338,14 @@ class Graph {
         return true;
     }
 
+    public void createGraphVis() {
+        gv = new GraphVis(am);
+    }
+
+    public void displayGraphVis() {
+        gv.display();
+    }
+
 
 
     public static void main(String[] args) {
@@ -351,6 +360,9 @@ class Graph {
             gr.printGraphMatrix();
             System.out.println();
         }
+
+        g.createGraphVis();
+        g.displayGraphVis();
         //System.out.println(g.isConnected());
 //		Graph mst = new Graph(g.kruskals());
 //		mst.printGraphMatrix();
