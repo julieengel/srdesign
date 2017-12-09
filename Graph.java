@@ -24,14 +24,25 @@ class Graph {
 		// HAVE TO CALL RANDOMIZE IN ORDER TO ACTUALLY GET EDGES
 	}
 	
-	public Graph (int[][] am) {
-		this.am = am;
-		this.n = am.length;
-		makeEdgeSet();
-	}
+//	public Graph (int[][] am) {
+//		this.am = am;
+//		this.n = am.length;
+//		makeEdgeSet();
+//	}
 	
-	public void setEdges(Set<Edge> es) {
-		edges = es;
+	public Graph (int[][] am, Set<Edge> edges) {
+		//this.am = am;
+		this.n = am.length;
+		this.am = new int[n][n];
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				this.am[i][j] = am[i][j];
+			}
+		}
+		this.edges = new HashSet<Edge>();
+		for (Edge e : edges) {
+			this.edges.add(e);
+		}
 	}
 	
 	void randomize(double p) {
@@ -75,6 +86,11 @@ class Graph {
 		am[u][v] = w;
 		am[v][u] = w;
 		m++;
+	}
+	
+	void addEdge(Edge e) {
+		 addEdge(e.getU(), e.getV(), e.getEdgeWeight());
+		 edges.add(e);
 	}
 	
 	void printGraphMatrix() {
@@ -124,17 +140,21 @@ class Graph {
 		// Create MST structure
 		int[][] mst = new int[n][n];
 		int edgeCount = 0;
+		Set<Edge> mstE = new HashSet<Edge>();
 		
         // more efficient to build heap by passing array of edges
         PriorityQueue<Edge> pq = new PriorityQueue<Edge>();
-        for (int i = 0; i < n; i++) {
-        		for (int j = i + 1; j < n; j++) {
-        			if (am[i][j] > 0) {
-        				Edge e = new Edge(i, j, am[i][j]);
-        				pq.add(e);
-        			}
-        		}
+        for (Edge e : edges) {
+        		pq.add(e);
         }
+//        for (int i = 0; i < n; i++) {
+//        		for (int j = i + 1; j < n; j++) {
+//        			if (am[i][j] > 0) {
+//        				Edge e = new Edge(i, j, am[i][j]);
+//        				pq.add(e);
+//        			}
+//        		}
+//        }
 
         // run greedy algorithm
         UF uf = new UF(n);
@@ -146,12 +166,13 @@ class Graph {
                 uf.union(u, v);  // merge u and v components
                 mst[u][v] = e.getEdgeWeight();  // add edge e to mst
                 mst[v][u] = e.getEdgeWeight();
+                mstE.add(e);
                 edgeCount++;
                 // weight += e.weight();
             }
         }
-        Graph mstGraph = new Graph(mst);
-        mstGraph.makeEdgeSet();
+        Graph mstGraph = new Graph(mst, mstE);
+//        mstGraph.makeEdgeSet();
         return mstGraph;
 
         // check optimality conditions
@@ -180,7 +201,7 @@ class Graph {
 		return true;
 	}
 
-	// isa start
+	// SOS!!!!!!!!!!!!!!!!!!!!!!!!!!!
 	void removeEdge(Edge e) {
 		//if (edges.contains(e)) {
 	        am[e.getU()][e.getV()] = 0;
@@ -189,17 +210,12 @@ class Graph {
 		//}
     }
 
-    void addEdge(Edge e) {
-	    addEdge(e.getU(), e.getV(), e.getEdgeWeight());
-	    edges.add(e);
-    }
-
 	Set<Edge> getEdgeSet() {
 	    return edges;
     }
 
 	Graph subtractGraph(Graph g) {
-	    Graph subtraction = new Graph(am);
+	    Graph subtraction = new Graph(am, edges);
 	    for (Edge e : g.getEdgeSet()) {
 	        subtraction.removeEdge(e);
         }
@@ -222,7 +238,7 @@ class Graph {
 		for (Edge e : edges) {
 		    notRemovedEdges.add(e);
         }
-		Graph curr = new Graph(am);
+		Graph curr = new Graph(am, edges);
 		// Generate the first ST
 		Graph firstST = curr.kruskals();
 		System.out.println("FIRST ST--------");
@@ -230,13 +246,7 @@ class Graph {
 		System.out.println();
 		sts.add(firstST);
 		
-//		Graph firstComplement = curr.subtractGraph(firstST);
-		
-		Graph firstComplement = new Graph(am);
-		System.out.println("firstComplement original edges = " + firstComplement.getEdgeSet().size());
-		for (Edge e : firstST.getEdgeSet()) {
-			firstComplement.removeEdge(e);
-		}
+		Graph firstComplement = curr.subtractGraph(firstST);
 		
 		System.out.println("FIRST COMPLEMENT--------");
 		firstComplement.printGraphMatrix();
@@ -248,22 +258,31 @@ class Graph {
 		
 		// While there are still things that haven't been removed
 		while (!notRemovedEdges.isEmpty()) {
+			System.out.println("STS CURRENTLY TOP ----");
+			for (Graph g : sts) {
+				g.printGraphMatrix();
+				System.out.println();
+			}
+			System.out.println("END STS CURRENTLY TOP----");
+			System.out.println("Not removed size: " + notRemovedEdges.size());
+			
 			// Make copy of original graph to modify
-			curr = new Graph(am);
+			curr = new Graph(am, edges);
+			System.out.println("curr edges = " + curr.getEdgeSet().size());
 			
 			// Remove all not yet removed edges from the original graph and see if it connects
 			for (Edge e : notRemovedEdges) {
 				curr.removeEdge(e);
 			}
+			System.out.println("curr edges after removed = " + curr.getEdgeSet().size());
 
 			// Initialize a union-find structure
 			UF uf = new UF(n);
-			// System.out.println("numComps before = " + uf.count());
 			// Union components that have edges
 			for (Edge e : curr.getEdgeSet()) {
 				uf.union(e.getU(), e.getV());
 			}
-			// System.out.println("numComps after = " + uf.count());
+			System.out.println("curr numComps = " + uf.count());
 			
 			while (uf.count() != 1) { // POTENTIAL INFINITE LOOP IF IT DOESN'T WORK
 				// A	dd back edges
@@ -274,11 +293,26 @@ class Graph {
 				if (!uf.connected(u, v)) { // u-v does not create a cycle
 					uf.union(u, v);  // merge u and v components
 					curr.addEdge(e);
+					System.out.println("GRAPH");
+					curr.printGraphMatrix();
+					System.out.println();
 	            }
 			}
 			
 			sts.add(curr);
+			System.out.println("STS CURRENTLY BOTTOM ----");
+			for (Graph g : sts) {
+				g.printGraphMatrix();
+				System.out.println();
+			}
+			System.out.println("END STS CURRENTLY BOTTOM----");
 			Graph complement = subtractGraph(curr);
+			System.out.println("STS CURRENTLY BOTTOM P2----");
+			for (Graph g : sts) {
+				g.printGraphMatrix();
+				System.out.println();
+			}
+			System.out.println("END STS CURRENTLY BOTTOM P2----");
 			for (Edge e : complement.getEdgeSet()) {
 				// All of the edges not in the ST have been removed
 				notRemovedEdges.remove(e);
