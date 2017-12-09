@@ -241,16 +241,16 @@ class Graph {
 		Graph curr = new Graph(am, edges);
 		// Generate the first ST
 		Graph firstST = curr.kruskals();
-		System.out.println("FIRST ST--------");
-		firstST.printGraphMatrix();
-		System.out.println();
+//		System.out.println("FIRST ST--------");
+//		firstST.printGraphMatrix();
+//		System.out.println();
 		sts.add(firstST);
 		
 		Graph firstComplement = curr.subtractGraph(firstST);
 		
-		System.out.println("FIRST COMPLEMENT--------");
-		firstComplement.printGraphMatrix();
-		System.out.println();
+//		System.out.println("FIRST COMPLEMENT--------");
+//		firstComplement.printGraphMatrix();
+//		System.out.println();
 		for (Edge e : firstComplement.getEdgeSet()) {
 			// All of the edges not in the ST have been removed
 			notRemovedEdges.remove(e);
@@ -258,23 +258,23 @@ class Graph {
 		
 		// While there are still things that haven't been removed
 		while (!notRemovedEdges.isEmpty()) {
-			System.out.println("STS CURRENTLY TOP ----");
-			for (Graph g : sts) {
-				g.printGraphMatrix();
-				System.out.println();
-			}
-			System.out.println("END STS CURRENTLY TOP----");
+//			System.out.println("STS CURRENTLY TOP ----");
+//			for (Graph g : sts) {
+//				g.printGraphMatrix();
+//				System.out.println();
+//			}
+//			System.out.println("END STS CURRENTLY TOP----");
 			System.out.println("Not removed size: " + notRemovedEdges.size());
 			
 			// Make copy of original graph to modify
 			curr = new Graph(am, edges);
-			System.out.println("curr edges = " + curr.getEdgeSet().size());
+			//System.out.println("curr edges = " + curr.getEdgeSet().size());
 			
 			// Remove all not yet removed edges from the original graph and see if it connects
 			for (Edge e : notRemovedEdges) {
 				curr.removeEdge(e);
 			}
-			System.out.println("curr edges after removed = " + curr.getEdgeSet().size());
+			//System.out.println("curr edges after removed = " + curr.getEdgeSet().size());
 
 			// Initialize a union-find structure
 			UF uf = new UF(n);
@@ -293,26 +293,20 @@ class Graph {
 				if (!uf.connected(u, v)) { // u-v does not create a cycle
 					uf.union(u, v);  // merge u and v components
 					curr.addEdge(e);
-					System.out.println("GRAPH");
-					curr.printGraphMatrix();
-					System.out.println();
+//					System.out.println("GRAPH");
+//					curr.printGraphMatrix();
+//					System.out.println();
 	            }
 			}
 			
 			sts.add(curr);
-			System.out.println("STS CURRENTLY BOTTOM ----");
-			for (Graph g : sts) {
-				g.printGraphMatrix();
-				System.out.println();
-			}
-			System.out.println("END STS CURRENTLY BOTTOM----");
 			Graph complement = subtractGraph(curr);
-			System.out.println("STS CURRENTLY BOTTOM P2----");
-			for (Graph g : sts) {
-				g.printGraphMatrix();
-				System.out.println();
-			}
-			System.out.println("END STS CURRENTLY BOTTOM P2----");
+//			System.out.println("STS CURRENTLY BOTTOM----");
+//			for (Graph g : sts) {
+//				g.printGraphMatrix();
+//				System.out.println();
+//			}
+//			System.out.println("END STS CURRENTLY BOTTOM----");
 			for (Edge e : complement.getEdgeSet()) {
 				// All of the edges not in the ST have been removed
 				notRemovedEdges.remove(e);
