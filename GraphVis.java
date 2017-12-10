@@ -3,18 +3,16 @@ import org.graphstream.graph.implementations.*;
 import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
 import org.graphstream.ui.spriteManager.*;
 
-
-
 public class GraphVis {
     org.graphstream.graph.Graph graph;
 
     public GraphVis(int[][] am) {
         graph = new SingleGraph("g1");
 
-
         for (int i = 0; i < am.length; i++) {
             String str = "" + i;
             graph.addNode(str);
+            graph.getNode(str).addAttribute("ui.label", str);
         }
 
         for (int i = 0; i < am.length; i++) {
@@ -23,6 +21,7 @@ public class GraphVis {
                     String strI = "" + i;
                     String strJ = "" + j;
                     graph.addEdge(strI + strJ, strI, strJ);
+                    graph.getEdge(strI + strJ).addAttribute("ui.label", am[i][j]);
                 }
             }
         }

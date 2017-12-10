@@ -359,6 +359,8 @@ class Graph {
         for (Graph gr : sts) {
             gr.printGraphMatrix();
             System.out.println();
+            gr.createGraphVis();
+            gr.displayGraphVis();
         }
 
         g.createGraphVis();
