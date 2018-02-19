@@ -81,6 +81,10 @@ class Graph {
         makeEdgeSet();
     }
 
+    int getSize() {
+        return n;
+    }
+
     void addEdge(int u, int v, int w) {
         if (u >= am.length || v >= am.length || u < 0 || v < 0) {
             throw new IllegalArgumentException();
@@ -93,6 +97,52 @@ class Graph {
     void addEdge(Edge e) {
         addEdge(e.getU(), e.getV(), e.getEdgeWeight());
         edges.add(e);
+    }
+
+    private static int minVertex(int[] dist, boolean[] v) {
+        int x = Integer.MAX_VALUE;
+        int y = -1;
+        for (int i = 0; i < dist.length; i++) {
+            if (!v[i] && dist[i] < x) {
+                y = i;
+                x = dist[i];
+            }
+        }
+        return y;
+    }
+
+    int[] dijsktra(int u) {
+        int[] dist = new int[n];
+        //int[] pred = new int[n];
+        boolean[] visited = new boolean[n];
+
+        for (int i = 0; i < dist.length; i++) {
+            dist[i] = Integer.MAX_VALUE;
+        }
+        dist[u] = 0;
+
+        for (int i = 0; i < dist.length; i++) {
+            int next = minVertex(dist, visited);
+            visited[next] = true;
+
+            int[] neighbors = getNeighbors(next);
+            for (int j = 0; j < neighbors.length; j++) {
+                int v = neighbors[j];
+                int d = dist[next] + getEdge(next, v).getEdgeWeight();
+                if (dist[v] > d) {
+                    dist[v] = d;
+                    //pred[v] = next;
+                }
+            }
+        }
+
+        return dist;
+    }
+
+    int getDistance(int u, int v) {
+        // Dijkstra's
+        int[] distances = dijsktra(u);
+        return distances[v];
     }
 
     void printGraphMatrix() {
@@ -338,6 +388,35 @@ class Graph {
         return true;
     }
 
+    // TODO: check if correct
+    int[] getNeighbors(int u) {
+        int[] amRow = am[u];
+        int count = 0;
+
+        for (int i = 0; i < amRow.length; i++) {
+            if (amRow[i] != 0) {
+                count++;
+            }
+        }
+
+        int[] output = new int[count];
+        int j = 0;
+
+        for (int i = 0; i < amRow.length; i++) {
+            if (amRow[i] != 0) {
+                output[j] = i;
+                j++;
+            }
+        }
+
+        return output;
+    }
+
+    Edge getEdge(int u, int v) {
+        // TODO: actually do this
+        return null;
+    }
+
     public void createGraphVis() {
         gv = new GraphVis(am);
     }
@@ -372,70 +451,7 @@ class Graph {
 
 
 
-    private class Edge implements Comparable<Edge>{
-        int u;
-        int v;
-        int w;
 
-        public Edge(int u, int v, int w) {
-            if (u < 0 || v < 0 || u >= n || v >= n) {
-                throw new IllegalArgumentException();
-            }
-            this.u = u;
-            this.v = v;
-            this.w = w;
-        }
-
-        public int getEdgeWeight() {
-            return w;
-        }
-
-        public int getU() {
-            return u;
-        }
-
-        public int getV() {
-            return v;
-        }
-
-        @Override
-        public int compareTo(Edge e) {
-            if (this.w > e.getEdgeWeight()) {
-                return 1;
-            } else if (this.w == e.getEdgeWeight()) {
-                return 0;
-            } else {
-                return -1;
-            }
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            // ISSUE: DOESNT GET CALLED BY CONTAINS()
-
-
-            System.out.println("EQUALS");
-            // If the object is compared with itself then return true
-            if (o == this) {
-                return true;
-            }
-
-	        /* Check if o is an instance of Complex or not
-	          "null instanceof [type]" also returns false */
-            if (!(o instanceof Edge)) {
-                return false;
-            }
-
-            // typecast o to Complex so that we can compare data members
-            Edge e = (Edge) o;
-
-            // Compare the data members and return accordingly
-            System.out.println("U: " + this.u + " " + e.u);
-            System.out.println("V: " + this.v + " " + e.v);
-            System.out.println("W: " + this.w + " " + e.w);
-            return (this.u == e.u) && (this.v == e.v) && (this.w == e.w);
-        }
-    }
 
     private class UF {
         private int[] parent;  // parent[i] = parent of i
@@ -531,5 +547,73 @@ class Graph {
                 throw new IllegalArgumentException("index " + p + " is not between 0 and " + (n-1));
             }
         }
+    }
+}
+
+class Edge implements Comparable<Edge>{
+    int u;
+    int v;
+    int w;
+
+    public Edge(int u, int v, int w) {
+//        if (u < 0 || v < 0 || u >= n || v >= n) {
+//            throw new IllegalArgumentException();
+//        }
+        if (u < 0 || v < 0) {
+            throw new IllegalArgumentException();
+        }
+        this.u = u;
+        this.v = v;
+        this.w = w;
+    }
+
+    public int getEdgeWeight() {
+        return w;
+    }
+
+    public int getU() {
+        return u;
+    }
+
+    public int getV() {
+        return v;
+    }
+
+    @Override
+    public int compareTo(Edge e) {
+        if (this.w > e.getEdgeWeight()) {
+            return 1;
+        } else if (this.w == e.getEdgeWeight()) {
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // ISSUE: DOESNT GET CALLED BY CONTAINS()
+
+
+        System.out.println("EQUALS");
+        // If the object is compared with itself then return true
+        if (o == this) {
+            return true;
+        }
+
+	        /* Check if o is an instance of Complex or not
+	          "null instanceof [type]" also returns false */
+        if (!(o instanceof Edge)) {
+            return false;
+        }
+
+        // typecast o to Complex so that we can compare data members
+        Edge e = (Edge) o;
+
+        // Compare the data members and return accordingly
+        System.out.println("U: " + this.u + " " + e.u);
+        System.out.println("V: " + this.v + " " + e.v);
+        System.out.println("W: " + this.w + " " + e.w);
+        return (this.u == e.u) && (this.v == e.v) && (this.w == e.w);
     }
 }
