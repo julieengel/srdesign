@@ -140,7 +140,6 @@ class Graph {
     }
 
     int getDistance(int u, int v) {
-        // Dijkstra's
         int[] distances = dijsktra(u);
         return distances[v];
     }

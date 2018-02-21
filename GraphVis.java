@@ -27,6 +27,28 @@ public class GraphVis {
         }
     }
 
+    public GraphVis(MultiGraph g) {
+        graph = new SingleGraph("g1");
+
+        MultiNode[] graphNodes = g.getNodes();
+
+        for (int i = 0; i < graphNodes.length; i++) {
+            String str = "" + i;
+            graph.addNode(str);
+            graph.getNode(str).addAttribute("ui.label", str);
+        }
+
+        for (int i = 0; i < graphNodes.length; i++) {
+            int[] neighbors = graphNodes[i].getNeighbors();
+            for (int j = 0; j < neighbors.length; j++) {
+                String strI = "" + i;
+                String strJ = "" + neighbors[j];
+                graph.addEdge(strI + strJ, strI, strJ);
+                graph.getEdge(strI + strJ).addAttribute("ui.label", g.getEdge(i, neighbors[j]));
+            }
+        }
+    }
+
     public void display() {
         graph.display();
     }
