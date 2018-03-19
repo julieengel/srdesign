@@ -25,11 +25,11 @@ class Graph {
         // HAVE TO CALL RANDOMIZE IN ORDER TO ACTUALLY GET EDGES
     }
 
-//	public Graph (int[][] am) {
-//		this.am = am;
-//		this.n = am.length;
-//		makeEdgeSet();
-//	}
+//  public Graph (int[][] am) {
+//      this.am = am;
+//      this.n = am.length;
+//      makeEdgeSet();
+//  }
 
     public Graph (int[][] am, Set<Edge> edges) {
         //this.am = am;
@@ -81,6 +81,10 @@ class Graph {
         makeEdgeSet();
     }
 
+    int getSize() {
+        return n;
+    }
+
     void addEdge(int u, int v, int w) {
         if (u >= am.length || v >= am.length || u < 0 || v < 0) {
             throw new IllegalArgumentException();
@@ -93,6 +97,51 @@ class Graph {
     void addEdge(Edge e) {
         addEdge(e.getU(), e.getV(), e.getEdgeWeight());
         edges.add(e);
+    }
+
+    private static int minVertex(int[] dist, boolean[] v) {
+        int x = Integer.MAX_VALUE;
+        int y = -1;
+        for (int i = 0; i < dist.length; i++) {
+            if (!v[i] && dist[i] < x) {
+                y = i;
+                x = dist[i];
+            }
+        }
+        return y;
+    }
+
+    int[] dijsktra(int u) {
+        int[] dist = new int[n];
+        //int[] pred = new int[n];
+        boolean[] visited = new boolean[n];
+
+        for (int i = 0; i < dist.length; i++) {
+            dist[i] = Integer.MAX_VALUE;
+        }
+        dist[u] = 0;
+
+        for (int i = 0; i < dist.length; i++) {
+            int next = minVertex(dist, visited);
+            visited[next] = true;
+
+            int[] neighbors = getNeighbors(next);
+            for (int j = 0; j < neighbors.length; j++) {
+                int v = neighbors[j];
+                int d = dist[next] + getEdge(next, v).getEdgeWeight();
+                if (dist[v] > d) {
+                    dist[v] = d;
+                    //pred[v] = next;
+                }
+            }
+        }
+
+        return dist;
+    }
+
+    int getDistance(int u, int v) {
+        int[] distances = dijsktra(u);
+        return distances[v];
     }
 
     void printGraphMatrix() {
@@ -150,12 +199,12 @@ class Graph {
             pq.add(e);
         }
 //        for (int i = 0; i < n; i++) {
-//        		for (int j = i + 1; j < n; j++) {
-//        			if (am[i][j] > 0) {
-//        				Edge e = new Edge(i, j, am[i][j]);
-//        				pq.add(e);
-//        			}
-//        		}
+//              for (int j = i + 1; j < n; j++) {
+//                  if (am[i][j] > 0) {
+//                      Edge e = new Edge(i, j, am[i][j]);
+//                      pq.add(e);
+//                  }
+//              }
 //        }
 
         // run greedy algorithm
@@ -243,16 +292,16 @@ class Graph {
         Graph curr = new Graph(am, edges);
         // Generate the first ST
         Graph firstST = curr.kruskals();
-//		System.out.println("FIRST ST--------");
-//		firstST.printGraphMatrix();
-//		System.out.println();
+//      System.out.println("FIRST ST--------");
+//      firstST.printGraphMatrix();
+//      System.out.println();
         sts.add(firstST);
 
         Graph firstComplement = curr.subtractGraph(firstST);
 
-//		System.out.println("FIRST COMPLEMENT--------");
-//		firstComplement.printGraphMatrix();
-//		System.out.println();
+//      System.out.println("FIRST COMPLEMENT--------");
+//      firstComplement.printGraphMatrix();
+//      System.out.println();
         for (Edge e : firstComplement.getEdgeSet()) {
             // All of the edges not in the ST have been removed
             notRemovedEdges.remove(e);
@@ -260,12 +309,12 @@ class Graph {
 
         // While there are still things that haven't been removed
         while (!notRemovedEdges.isEmpty()) {
-//			System.out.println("STS CURRENTLY TOP ----");
-//			for (Graph g : sts) {
-//				g.printGraphMatrix();
-//				System.out.println();
-//			}
-//			System.out.println("END STS CURRENTLY TOP----");
+//          System.out.println("STS CURRENTLY TOP ----");
+//          for (Graph g : sts) {
+//              g.printGraphMatrix();
+//              System.out.println();
+//          }
+//          System.out.println("END STS CURRENTLY TOP----");
             System.out.println("Not removed size: " + notRemovedEdges.size());
 
             // Make copy of original graph to modify
@@ -295,20 +344,20 @@ class Graph {
                 if (!uf.connected(u, v)) { // u-v does not create a cycle
                     uf.union(u, v);  // merge u and v components
                     curr.addEdge(e);
-//					System.out.println("GRAPH");
-//					curr.printGraphMatrix();
-//					System.out.println();
+//                  System.out.println("GRAPH");
+//                  curr.printGraphMatrix();
+//                  System.out.println();
                 }
             }
 
             sts.add(curr);
             Graph complement = subtractGraph(curr);
-//			System.out.println("STS CURRENTLY BOTTOM----");
-//			for (Graph g : sts) {
-//				g.printGraphMatrix();
-//				System.out.println();
-//			}
-//			System.out.println("END STS CURRENTLY BOTTOM----");
+//          System.out.println("STS CURRENTLY BOTTOM----");
+//          for (Graph g : sts) {
+//              g.printGraphMatrix();
+//              System.out.println();
+//          }
+//          System.out.println("END STS CURRENTLY BOTTOM----");
             for (Edge e : complement.getEdgeSet()) {
                 // All of the edges not in the ST have been removed
                 notRemovedEdges.remove(e);
@@ -336,6 +385,35 @@ class Graph {
             }
         }
         return true;
+    }
+
+    // TODO: check if correct
+    int[] getNeighbors(int u) {
+        int[] amRow = am[u];
+        int count = 0;
+
+        for (int i = 0; i < amRow.length; i++) {
+            if (amRow[i] != 0) {
+                count++;
+            }
+        }
+
+        int[] output = new int[count];
+        int j = 0;
+
+        for (int i = 0; i < amRow.length; i++) {
+            if (amRow[i] != 0) {
+                output[j] = i;
+                j++;
+            }
+        }
+
+        return output;
+    }
+
+    Edge getEdge(int u, int v) {
+        // TODO: actually do this
+        return null;
     }
 
     public void createGraphVis() {
@@ -366,76 +444,13 @@ class Graph {
         g.createGraphVis();
         g.displayGraphVis();
         //System.out.println(g.isConnected());
-//		Graph mst = new Graph(g.kruskals());
-//		mst.printGraphMatrix();
+//      Graph mst = new Graph(g.kruskals());
+//      mst.printGraphMatrix();
     }
 
 
 
-    private class Edge implements Comparable<Edge>{
-        int u;
-        int v;
-        int w;
 
-        public Edge(int u, int v, int w) {
-            if (u < 0 || v < 0 || u >= n || v >= n) {
-                throw new IllegalArgumentException();
-            }
-            this.u = u;
-            this.v = v;
-            this.w = w;
-        }
-
-        public int getEdgeWeight() {
-            return w;
-        }
-
-        public int getU() {
-            return u;
-        }
-
-        public int getV() {
-            return v;
-        }
-
-        @Override
-        public int compareTo(Edge e) {
-            if (this.w > e.getEdgeWeight()) {
-                return 1;
-            } else if (this.w == e.getEdgeWeight()) {
-                return 0;
-            } else {
-                return -1;
-            }
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            // ISSUE: DOESNT GET CALLED BY CONTAINS()
-
-
-            System.out.println("EQUALS");
-            // If the object is compared with itself then return true
-            if (o == this) {
-                return true;
-            }
-
-	        /* Check if o is an instance of Complex or not
-	          "null instanceof [type]" also returns false */
-            if (!(o instanceof Edge)) {
-                return false;
-            }
-
-            // typecast o to Complex so that we can compare data members
-            Edge e = (Edge) o;
-
-            // Compare the data members and return accordingly
-            System.out.println("U: " + this.u + " " + e.u);
-            System.out.println("V: " + this.v + " " + e.v);
-            System.out.println("W: " + this.w + " " + e.w);
-            return (this.u == e.u) && (this.v == e.v) && (this.w == e.w);
-        }
-    }
 
     private class UF {
         private int[] parent;  // parent[i] = parent of i
@@ -531,5 +546,73 @@ class Graph {
                 throw new IllegalArgumentException("index " + p + " is not between 0 and " + (n-1));
             }
         }
+    }
+}
+
+class Edge implements Comparable<Edge>{
+    int u;
+    int v;
+    int w;
+
+    public Edge(int u, int v, int w) {
+//        if (u < 0 || v < 0 || u >= n || v >= n) {
+//            throw new IllegalArgumentException();
+//        }
+        if (u < 0 || v < 0) {
+            throw new IllegalArgumentException();
+        }
+        this.u = u;
+        this.v = v;
+        this.w = w;
+    }
+
+    public int getEdgeWeight() {
+        return w;
+    }
+
+    public int getU() {
+        return u;
+    }
+
+    public int getV() {
+        return v;
+    }
+
+    @Override
+    public int compareTo(Edge e) {
+        if (this.w > e.getEdgeWeight()) {
+            return 1;
+        } else if (this.w == e.getEdgeWeight()) {
+            return 0;
+        } else {
+            return -1;
+        }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        // ISSUE: DOESNT GET CALLED BY CONTAINS()
+
+
+        System.out.println("EQUALS");
+        // If the object is compared with itself then return true
+        if (o == this) {
+            return true;
+        }
+
+            /* Check if o is an instance of Complex or not
+              "null instanceof [type]" also returns false */
+        if (!(o instanceof Edge)) {
+            return false;
+        }
+
+        // typecast o to Complex so that we can compare data members
+        Edge e = (Edge) o;
+
+        // Compare the data members and return accordingly
+        System.out.println("U: " + this.u + " " + e.u);
+        System.out.println("V: " + this.v + " " + e.v);
+        System.out.println("W: " + this.w + " " + e.w);
+        return (this.u == e.u) && (this.v == e.v) && (this.w == e.w);
     }
 }
