@@ -1,11 +1,8 @@
-import scala.collection.mutable.MutableList;
-
 import java.util.*;
 
 class MultiGraph {
     private int N;
     private MultiNode[] nodes;
-    //private Map<Integer, List<MultiEdge>> neighbors;
     private List<MultiEdge> edges;
     GraphVis gv;
 
@@ -15,11 +12,20 @@ class MultiGraph {
         for (int i = 0; i < N; i++) {
             nodes[i] = new MultiNode(i);
         }
-//        neighbors = new HashMap<>();
-//        for (int i = 0; i < n; i++) {
-//            neighbors.put(i, new ArrayList<>());
-//        }
         edges = new ArrayList<>();
+    }
+
+    public MultiGraph(MultiGraph g) {
+        N = g.getSize();
+        nodes = new MultiNode[N];
+        for (int i = 0; i < N; i++) {
+            nodes[i] = new MultiNode(i);
+        }
+        edges = new ArrayList<>();
+
+        for (MultiEdge e : g.getEdges()) {
+            addEdge(e.getU(), e.getV(), e.getEdgeWeight());
+        }
     }
 
     int getSize() {
@@ -35,16 +41,31 @@ class MultiGraph {
         int u = newEdge.getU();
         int v = newEdge.getV();
 
-//        neighbors.get(u).add(newEdge);
-//        neighbors.get(v).add(newEdge);
-
         nodes[u].addEdge(v, newEdge);
         nodes[v].addEdge(u, newEdge);
 
         edges.add(newEdge);
     }
 
-    // TODO: probably want a way to not make this public
+    public void removeEdge(int u, int v, int w) {
+        // TODO: will need to change this for multi graph
+        MultiEdge edgeToRemove = nodes[u].getEdge(v);
+        nodes[u].removeEdge(v);
+        nodes[v].removeEdge(u);
+        edges.remove(edgeToRemove);
+
+    }
+
+    public boolean containsEdge(MultiEdge e) {
+        return edges.contains(e);
+    }
+
+    public void removeEdge(MultiEdge e) {
+        nodes[e.getU()].removeEdge(e.getV());
+        nodes[e.getV()].removeEdge(e.getU());
+        edges.remove(e);
+    }
+
     public List<MultiEdge> getEdges() {
         return edges;
     }
@@ -54,17 +75,24 @@ class MultiGraph {
     }
 
     public int[] getNeighbors(int u) {
-        // TODO: check if correct
         return nodes[u].getNeighbors();
     }
 
     public int getEdgeWeight(int u, int v) {
-        // TODO: check about getting correct edge
+        // TODO: check about getting correct edge when multigraph
         return getEdge(u, v).getEdgeWeight();
     }
 
     public MultiEdge getEdge(int u, int v) {
         return nodes[u].getEdge(v);
+    }
+
+    MultiGraph subtractGraph(MultiGraph g) {
+        MultiGraph subtraction = new MultiGraph(this);
+        for (MultiEdge e : g.getEdges()) {
+            subtraction.removeEdge(e);
+        }
+        return subtraction;
     }
 
 
@@ -100,6 +128,8 @@ class MultiGraph {
     }
 
 
+
+
     // ---- distance calcs -----
 
     private static int minVertex(int[] dist, boolean[] v) {
@@ -116,7 +146,6 @@ class MultiGraph {
 
     int[] dijsktra(int u) {
         int[] dist = new int[N];
-        //int[] pred = new int[n];
         boolean[] visited = new boolean[N];
 
         for (int i = 0; i < dist.length; i++) {
@@ -126,6 +155,12 @@ class MultiGraph {
 
         for (int i = 0; i < dist.length; i++) {
             int next = minVertex(dist, visited);
+
+            // TODO: check this is what we want to do
+            if (next == -1) {
+                continue;
+            }
+
             visited[next] = true;
 
             int[] neighbors = getNeighbors(next);
@@ -134,7 +169,6 @@ class MultiGraph {
                 int d = dist[next] + getEdge(next, v).getEdgeWeight();
                 if (dist[v] > d) {
                     dist[v] = d;
-                    //pred[v] = next;
                 }
             }
         }
@@ -148,6 +182,73 @@ class MultiGraph {
     }
 
 
+
+    // ----------  -------------
+
+
+    // TODO: need to figure this out
+    Set<MultiGraph> generateSpanners() {
+        Set<MultiGraph> spanners = new HashSet<MultiGraph>();
+        Set<MultiEdge> notRemovedEdges = new HashSet<MultiEdge>();
+
+        // Originally, no edges have been seen so add them all to the set
+        for (MultiEdge e : edges) {
+            notRemovedEdges.add(e);
+        }
+
+        MultiGraph curr = new MultiGraph(this);
+
+        // Generate the first spanner
+        Spanner spanner = new Spanner(this, 2.0);
+        MultiGraph firstSpanner = spanner.buildSpanner();
+        spanners.add(firstSpanner);
+
+        MultiGraph firstComplement = curr.subtractGraph(firstSpanner);
+
+        for (MultiEdge e : firstComplement.getEdges()) {
+            // All of the edges not in the spanner have been removed
+            notRemovedEdges.remove(e);
+        }
+
+        // value to determine whether we reach infinite loop
+        int notRemovedPrevCount = notRemovedEdges.size();
+
+        // While there are still things that haven't been removed
+        while (!notRemovedEdges.isEmpty()) {
+
+            // Make copy of original graph to modify
+            curr = new MultiGraph(this);
+
+            // Remove all not yet removed edges from the original graph and see if it connects
+            for (MultiEdge e : notRemovedEdges) {
+                curr.removeEdge(e);
+            }
+
+            spanner.buildSpannerFromBase(curr);
+
+            spanners.add(curr);
+            MultiGraph complement = subtractGraph(curr);
+
+            for (MultiEdge e : complement.getEdges()) {
+                notRemovedEdges.remove(e);
+            }
+
+            if (notRemovedEdges.size() == notRemovedPrevCount) {
+                System.out.println("HAD TO EXIT");
+                System.out.println("NOT REMOVED = " + notRemovedPrevCount);
+                break;
+            } else {
+                notRemovedPrevCount = notRemovedEdges.size();
+            }
+            System.out.println("SPANNERS count = " + spanners.size());
+
+        }
+        return spanners;
+    }
+
+
+
+
     // ----------- GRAPH VIS ------------
 
 
@@ -159,15 +260,142 @@ class MultiGraph {
         gv.display();
     }
 
+
+    private class UF {
+        private int[] parent;  // parent[i] = parent of i
+        private byte[] rank;   // rank[i] = rank of subtree rooted at i (never more than 31)
+        private int count;     // number of components
+
+        /**
+         * Initializes an empty union–find data structure with {@code n} sites
+         * {@code 0} through {@code n-1}. Each site is initially in its own
+         * component.
+         *
+         * @param  n the number of sites
+         * @throws IllegalArgumentException if {@code n < 0}
+         */
+        public UF(int n) {
+            if (n < 0) throw new IllegalArgumentException();
+            count = n;
+            parent = new int[n];
+            rank = new byte[n];
+            for (int i = 0; i < n; i++) {
+                parent[i] = i;
+                rank[i] = 0;
+            }
+        }
+
+        /**
+         * Returns the component identifier for the component containing site {@code p}.
+         *
+         * @param  p the integer representing one site
+         * @return the component identifier for the component containing site {@code p}
+         * @throws IllegalArgumentException unless {@code 0 <= p < n}
+         */
+        public int find(int p) {
+            validate(p);
+            while (p != parent[p]) {
+                parent[p] = parent[parent[p]];    // path compression by halving
+                p = parent[p];
+            }
+            return p;
+        }
+
+        /**
+         * Returns the number of components.
+         *
+         * @return the number of components (between {@code 1} and {@code n})
+         */
+        public int count() {
+            return count;
+        }
+
+        /**
+         * Returns true if the the two sites are in the same component.
+         *
+         * @param  p the integer representing one site
+         * @param  q the integer representing the other site
+         * @return {@code true} if the two sites {@code p} and {@code q} are in the same component;
+         *         {@code false} otherwise
+         * @throws IllegalArgumentException unless
+         *         both {@code 0 <= p < n} and {@code 0 <= q < n}
+         */
+        public boolean connected(int p, int q) {
+            return find(p) == find(q);
+        }
+
+        /**
+         * Merges the component containing site {@code p} with the
+         * the component containing site {@code q}.
+         *
+         * @param  p the integer representing one site
+         * @param  q the integer representing the other site
+         * @throws IllegalArgumentException unless
+         *         both {@code 0 <= p < n} and {@code 0 <= q < n}
+         */
+        public void union(int p, int q) {
+            int rootP = find(p);
+            int rootQ = find(q);
+            if (rootP == rootQ) return;
+
+            // make root of smaller rank point to root of larger rank
+            if      (rank[rootP] < rank[rootQ]) parent[rootP] = rootQ;
+            else if (rank[rootP] > rank[rootQ]) parent[rootQ] = rootP;
+            else {
+                parent[rootQ] = rootP;
+                rank[rootP]++;
+            }
+            count--;
+        }
+
+        // validate that p is a valid index
+        private void validate(int p) {
+            int n = parent.length;
+            if (p < 0 || p >= n) {
+                throw new IllegalArgumentException("index " + p + " is not between 0 and " + (n-1));
+            }
+        }
+    }
+
+
+
+
+    public static void main(String[] args) {
+        MultiGraph g = new MultiGraph(5);
+        g.randomize(.5);
+        //g.assignRandomWeights();
+//        g.printGraphMatrix();
+//        System.out.println();
+//        System.out.println();
+//        System.out.println("     " + g.getNeighbors(0).length);
+
+        Spanner s = new Spanner(g, 2.0);
+//        MultiGraph sp = s.buildSpanner();
+//        sp.createGraphVis();
+//        sp.displayGraphVis();
+
+//        System.out.println("g " + g.getEdges().size() + " sp " + sp.getEdges().size());
+
+
+        Set<MultiGraph> spanners = g.generateSpanners();
+        for (MultiGraph sp : spanners) {
+            sp.createGraphVis();
+            sp.displayGraphVis();
+        }
+
+        g.createGraphVis();
+        g.displayGraphVis();
+    }
+
 }
 
 
 
 
 class MultiEdge implements Comparable<MultiEdge> {
-    private int u;
-    private int v;
-    private int weight;
+    private final int u;
+    private final int v;
+    private final int weight;
 
     public MultiEdge(int u, int v, int weight) {
         this.u = u;
@@ -206,7 +434,7 @@ class MultiEdge implements Comparable<MultiEdge> {
         }
 
         /* Check if o is an instance of Complex or not
-	       "null instanceof [type]" also returns false */
+           "null instanceof [type]" also returns false */
         if (!(o instanceof MultiEdge)) {
             return false;
         }
@@ -227,7 +455,6 @@ class MultiEdge implements Comparable<MultiEdge> {
 class MultiNode {
     int id;
     Map<Integer, List<MultiEdge>> neighbors;
-    //List<MultiEdge> edges;
 
     public MultiNode(int id) {
         this.id = id;
@@ -235,12 +462,15 @@ class MultiNode {
     }
 
     public void addEdge(int u, MultiEdge e) {
-        //edges.add(e);
         if (!neighbors.containsKey(u)) {
             neighbors.put(u, new ArrayList<>());
         }
         neighbors.get(u).add(e);
 
+    }
+
+    public void removeEdge(int v) {
+        neighbors.remove(v);
     }
 
     // TODO: right now only returns first edge in list

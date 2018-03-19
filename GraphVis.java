@@ -28,7 +28,7 @@ public class GraphVis {
     }
 
     public GraphVis(MultiGraph g) {
-        graph = new SingleGraph("g1");
+        graph = new org.graphstream.graph.implementations.MultiGraph("g1");
 
         MultiNode[] graphNodes = g.getNodes();
 
@@ -41,10 +41,10 @@ public class GraphVis {
         for (int i = 0; i < graphNodes.length; i++) {
             int[] neighbors = graphNodes[i].getNeighbors();
             for (int j = 0; j < neighbors.length; j++) {
-                String strI = "" + i;
-                String strJ = "" + neighbors[j];
-                graph.addEdge(strI + strJ, strI, strJ);
-                graph.getEdge(strI + strJ).addAttribute("ui.label", g.getEdge(i, neighbors[j]));
+                    String strI = "" + i;
+                    String strJ = "" + neighbors[j];
+                    graph.addEdge(strI + "-" + strJ, strI, strJ);
+                    graph.getEdge(strI + "-" + strJ).addAttribute("ui.label", g.getEdge(i, neighbors[j]));
             }
         }
     }

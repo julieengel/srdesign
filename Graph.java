@@ -25,11 +25,11 @@ class Graph {
         // HAVE TO CALL RANDOMIZE IN ORDER TO ACTUALLY GET EDGES
     }
 
-//	public Graph (int[][] am) {
-//		this.am = am;
-//		this.n = am.length;
-//		makeEdgeSet();
-//	}
+//  public Graph (int[][] am) {
+//      this.am = am;
+//      this.n = am.length;
+//      makeEdgeSet();
+//  }
 
     public Graph (int[][] am, Set<Edge> edges) {
         //this.am = am;
@@ -199,12 +199,12 @@ class Graph {
             pq.add(e);
         }
 //        for (int i = 0; i < n; i++) {
-//        		for (int j = i + 1; j < n; j++) {
-//        			if (am[i][j] > 0) {
-//        				Edge e = new Edge(i, j, am[i][j]);
-//        				pq.add(e);
-//        			}
-//        		}
+//              for (int j = i + 1; j < n; j++) {
+//                  if (am[i][j] > 0) {
+//                      Edge e = new Edge(i, j, am[i][j]);
+//                      pq.add(e);
+//                  }
+//              }
 //        }
 
         // run greedy algorithm
@@ -292,16 +292,16 @@ class Graph {
         Graph curr = new Graph(am, edges);
         // Generate the first ST
         Graph firstST = curr.kruskals();
-//		System.out.println("FIRST ST--------");
-//		firstST.printGraphMatrix();
-//		System.out.println();
+//      System.out.println("FIRST ST--------");
+//      firstST.printGraphMatrix();
+//      System.out.println();
         sts.add(firstST);
 
         Graph firstComplement = curr.subtractGraph(firstST);
 
-//		System.out.println("FIRST COMPLEMENT--------");
-//		firstComplement.printGraphMatrix();
-//		System.out.println();
+//      System.out.println("FIRST COMPLEMENT--------");
+//      firstComplement.printGraphMatrix();
+//      System.out.println();
         for (Edge e : firstComplement.getEdgeSet()) {
             // All of the edges not in the ST have been removed
             notRemovedEdges.remove(e);
@@ -309,12 +309,12 @@ class Graph {
 
         // While there are still things that haven't been removed
         while (!notRemovedEdges.isEmpty()) {
-//			System.out.println("STS CURRENTLY TOP ----");
-//			for (Graph g : sts) {
-//				g.printGraphMatrix();
-//				System.out.println();
-//			}
-//			System.out.println("END STS CURRENTLY TOP----");
+//          System.out.println("STS CURRENTLY TOP ----");
+//          for (Graph g : sts) {
+//              g.printGraphMatrix();
+//              System.out.println();
+//          }
+//          System.out.println("END STS CURRENTLY TOP----");
             System.out.println("Not removed size: " + notRemovedEdges.size());
 
             // Make copy of original graph to modify
@@ -344,20 +344,20 @@ class Graph {
                 if (!uf.connected(u, v)) { // u-v does not create a cycle
                     uf.union(u, v);  // merge u and v components
                     curr.addEdge(e);
-//					System.out.println("GRAPH");
-//					curr.printGraphMatrix();
-//					System.out.println();
+//                  System.out.println("GRAPH");
+//                  curr.printGraphMatrix();
+//                  System.out.println();
                 }
             }
 
             sts.add(curr);
             Graph complement = subtractGraph(curr);
-//			System.out.println("STS CURRENTLY BOTTOM----");
-//			for (Graph g : sts) {
-//				g.printGraphMatrix();
-//				System.out.println();
-//			}
-//			System.out.println("END STS CURRENTLY BOTTOM----");
+//          System.out.println("STS CURRENTLY BOTTOM----");
+//          for (Graph g : sts) {
+//              g.printGraphMatrix();
+//              System.out.println();
+//          }
+//          System.out.println("END STS CURRENTLY BOTTOM----");
             for (Edge e : complement.getEdgeSet()) {
                 // All of the edges not in the ST have been removed
                 notRemovedEdges.remove(e);
@@ -444,8 +444,8 @@ class Graph {
         g.createGraphVis();
         g.displayGraphVis();
         //System.out.println(g.isConnected());
-//		Graph mst = new Graph(g.kruskals());
-//		mst.printGraphMatrix();
+//      Graph mst = new Graph(g.kruskals());
+//      mst.printGraphMatrix();
     }
 
 
@@ -600,8 +600,8 @@ class Edge implements Comparable<Edge>{
             return true;
         }
 
-	        /* Check if o is an instance of Complex or not
-	          "null instanceof [type]" also returns false */
+            /* Check if o is an instance of Complex or not
+              "null instanceof [type]" also returns false */
         if (!(o instanceof Edge)) {
             return false;
         }
