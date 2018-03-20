@@ -14,30 +14,30 @@ class MultiGraph {
         }
         edges = new ArrayList<>();
     }
-    
+
     public MultiGraph(CSVParser parser) {
-    		N = parser.getN();
-    		// Add nodes
-    		nodes = new MultiNode[N];
-    		for (int i = 0; i < N; i++) {
-    			nodes[i] = new MultiNode(i, parser.getStationNames().get(i));
-    		}
-    		// Use addEdge() function to make the edges
-    		edges = new ArrayList<>();
-    		int[][] trainEdges = parser.getTrainEdges();
-    		int[][] walkingEdges = parser.getWalkingEdges();
-    		Line[][] edgeColors = parser.getEdgeColors();
-    		for (int i = 0; i < N; i++) {
-    			for (int j = 0; j < N; j++) {
-    				// Add train edge if exists
-    				if (trainEdges[i][j] != 0) {
-    					addEdge(i, j, trainEdges[i][j], false, edgeColors[i][j]);
-    				}
-    				if (walkingEdges[i][j] != 0) {
-    					addEdge(i, j, walkingEdges[i][j], true, Line.WALK);
-    				}
-    			}
-    		}
+        N = parser.getN();
+        // Add nodes
+        nodes = new MultiNode[N];
+        for (int i = 0; i < N; i++) {
+            nodes[i] = new MultiNode(i, parser.getStationNames().get(i));
+        }
+        // Use addEdge() function to make the edges
+        edges = new ArrayList<>();
+        int[][] trainEdges = parser.getTrainEdges();
+        int[][] walkingEdges = parser.getWalkingEdges();
+        Line[][] edgeColors = parser.getEdgeColors();
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                // Add train edge if exists
+                if (trainEdges[i][j] != 0) {
+                    addEdge(i, j, trainEdges[i][j], false, edgeColors[i][j]);
+                }
+                if (walkingEdges[i][j] != 0) {
+                    addEdge(i, j, walkingEdges[i][j], true, Line.WALK);
+                }
+            }
+        }
     }
 
     public MultiGraph(MultiGraph g) { // For spanner copying
@@ -219,16 +219,16 @@ class MultiGraph {
 
         // Originally, no edges have been seen so add them all to the set
         for (MultiEdge e : edges) {
-        		if (!e.getWalking()) {
-        			// Only add when it's not a walking edge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        			notRemovedEdges.add(e);
-        		}
+            if (!e.getWalking()) {
+                // Only add when it's not a walking edge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                notRemovedEdges.add(e);
+            }
         }
 
         MultiGraph curr = new MultiGraph(this);
 
         // Generate the first spanner
-        Spanner spanner = new Spanner(this, 2.0);
+        Spanner spanner = new Spanner(this, 1.5);
         MultiGraph firstSpanner = spanner.buildSpanner();
         spanners.add(firstSpanner);
 
@@ -274,7 +274,25 @@ class MultiGraph {
         }
         return spanners;
     }
-    
+
+    // TODO: BE CAREFUL OF WALKING EDGES ONCE MERGED
+    public Set<Set<MultiEdge>> generateMaintenanceSets(Set<MultiGraph> spanners) {
+        Set<Set<MultiEdge>> sets = new HashSet<>();
+        for (MultiGraph s : spanners) {
+            Set<MultiEdge> subset = new HashSet<>();
+            MultiGraph complement = subtractGraph(s);
+            for (MultiEdge e : complement.getEdges()) {
+                if (!e.getWalking()) {
+                    subset.add(e);
+                }
+            }
+            //subset.addAll(complement.getEdges());
+            sets.add(subset);
+        }
+        return sets;
+    }
+
+
 
     // ----------- GRAPH VIS ------------
 
@@ -388,9 +406,9 @@ class MultiGraph {
 
 
     public static void main(String[] args) {
-    	
-    		// ISA -------------------------------------------------------------------------------
-    	
+
+        // ISA -------------------------------------------------------------------------------
+
 //        MultiGraph g = new MultiGraph(5); // REPLACE WITH CONSTRUCTING REAL GRAPH
 //        g.randomize(.5); // ^^
         //g.assignRandomWeights();
@@ -398,37 +416,57 @@ class MultiGraph {
 //        System.out.println();
 //        System.out.println();
 //        System.out.println("     " + g.getNeighbors(0).length);
-    	
-    		// ISA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    	
-    		String trainEdgesFilename = "TrainEdgesCSV.csv";
-		String walkingEdgesFilename = "WalkingEdgesCSV.csv";
-		String edgeColorsFilename = "EdgeColorsCSV.csv";
-		String stationNamesFilename = "StationNamesCSV.csv";
-		CSVParser parser = new CSVParser(trainEdgesFilename, walkingEdgesFilename, edgeColorsFilename,
-				stationNamesFilename);
-		parser.parse();
-		MultiGraph g = new MultiGraph(parser);
-		Spanner s = new Spanner(g, 2.0);
-        
+
+        // ISA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        String trainEdgesFilename = "TrainEdgesCSV.csv";
+        String walkingEdgesFilename = "WalkingEdgesCSV.csv";
+        String edgeColorsFilename = "EdgeColorsCSV.csv";
+        String stationNamesFilename = "StationNamesCSV.csv";
+        CSVParser parser = new CSVParser(trainEdgesFilename, walkingEdgesFilename, edgeColorsFilename,
+                stationNamesFilename);
+        parser.parse();
+        MultiGraph g = new MultiGraph(parser);
+        Spanner s = new Spanner(g, 2.0);
+
         // ISA -------------------------------------------------------------------------------
-        MultiGraph sp = s.buildSpanner();
-        sp.createGraphVis();
-        sp.displayGraphVis();
+//        MultiGraph sp = s.buildSpanner();
+////        sp.createGraphVis();
+////        sp.displayGraphVis();
 
 //        System.out.println("g " + g.getEdges().size() + " sp " + sp.getEdges().size());
-        
+
         // ISA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-//        Set<MultiGraph> spanners = g.generateSpanners();
-//        for (MultiGraph sp : spanners) {
-//            sp.createGraphVis();
-//            sp.displayGraphVis();
-//        }
-//
-//        g.createGraphVis();
-//        g.displayGraphVis();
+        Set<MultiGraph> spanners = g.generateSpanners();
+        for (MultiGraph sp : spanners) {
+            sp.createGraphVis();
+            sp.displayGraphVis();
+        }
+
+        g.createGraphVis();
+        g.displayGraphVis();
+
+        int count = 0;
+        Set<Set<MultiEdge>> sets = g.generateMaintenanceSets(spanners);
+        for (Set<MultiEdge> set : sets) {
+            System.out.println("MAINTENANCE SET #" + count);
+            count++;
+            for (MultiEdge e : set) {
+                System.out.println(g.getNodes()[e.getU()].getStationName()
+                        + " - " + g.getNodes()[e.getV()].getStationName());
+            }
+            System.out.println();
+        }
+
+        count = 0;
+        for (MultiGraph spanner : spanners) {
+            System.out.println("SPANNER #" + count);
+            count++;
+            System.out.println(spanner.getDistance(19, 9));
+            System.out.println();
+        }
     }
 
 }
@@ -461,13 +499,13 @@ class MultiEdge implements Comparable<MultiEdge> {
     public int getV() {
         return v;
     }
-    
+
     public boolean getWalking() {
-    		return walking;
+        return walking;
     }
-    
+
     public Line getLine() {
-    		return line;
+        return line;
     }
 
     @Override
@@ -498,8 +536,8 @@ class MultiEdge implements Comparable<MultiEdge> {
         MultiEdge e = (MultiEdge) o;
 
         // Compare the data members and return accordingly
-        return (this.u == e.u) && (this.v == e.v) && (this.weight == e.weight) 
-        		&& (this.line == e.line) && (this.walking == e.walking);
+        return (this.u == e.u) && (this.v == e.v) && (this.weight == e.weight)
+                && (this.line == e.line) && (this.walking == e.walking);
     }
 
     @Override
@@ -552,9 +590,9 @@ class MultiNode {
         }
         return output;
     }
-    
+
     public String getStationName() {
-    		return stationName;
+        return stationName;
     }
 
 }
