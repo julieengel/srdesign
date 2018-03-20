@@ -201,6 +201,55 @@ class MultiGraph {
         return dist;
     }
 
+    int[] dijsktraForPath(int u) {
+        int[] dist = new int[N];
+        int[] pred = new int[N];
+        boolean[] visited = new boolean[N];
+
+        for (int i = 0; i < dist.length; i++) {
+            dist[i] = Integer.MAX_VALUE;
+        }
+        dist[u] = 0;
+
+        for (int i = 0; i < dist.length; i++) {
+            int next = minVertex(dist, visited);
+
+            // TODO: check this is what we want to do
+            if (next == -1) {
+                continue;
+            }
+
+            visited[next] = true;
+
+            int[] neighbors = getNeighbors(next);
+            for (int j = 0; j < neighbors.length; j++) {
+                int v = neighbors[j];
+                int d = dist[next] + getEdge(next, v).getEdgeWeight();
+                if (dist[v] > d) {
+                    dist[v] = d;
+                    pred[v] = next;
+                }
+            }
+        }
+
+        return pred;
+    }
+
+    List<Integer> getPathFromTo(int u, int v) {
+        List<Integer> path = new ArrayList<>();
+        int[] paths = dijsktraForPath(u);
+
+        int index = v;
+        path.add(v);
+        while (index != u) {
+            int prev = paths[index];
+            path.add(0, prev);
+            index = prev;
+        }
+
+        return path;
+    }
+
     int getDistance(int u, int v) {
         int[] distances = dijsktra(u);
         return distances[v];
@@ -465,6 +514,10 @@ class MultiGraph {
             System.out.println("SPANNER #" + count);
             count++;
             System.out.println(spanner.getDistance(19, 9));
+            List<Integer> path = spanner.getPathFromTo(19, 9);
+            for (int i = 0; i < path.size(); i++) {
+                System.out.println(path.get(i));
+            }
             System.out.println();
         }
     }
