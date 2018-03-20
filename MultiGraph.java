@@ -246,9 +246,6 @@ class MultiGraph {
         return spanners;
     }
     
-    // Attribute for line color
-    public enum Line {RED, GREEN, BLUE, ORANGE, BROWN, YELLOW};
-    
 
     // ----------- GRAPH VIS ------------
 
@@ -389,8 +386,6 @@ class MultiGraph {
     }
 
 }
-
-
 
 
 class MultiEdge implements Comparable<MultiEdge> {
