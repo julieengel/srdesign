@@ -28,7 +28,7 @@ class MultiGraph {
     		int[][] walkingEdges = parser.getWalkingEdges();
     		Line[][] edgeColors = parser.getEdgeColors();
     		for (int i = 0; i < N; i++) {
-    			for (int j = 0; j < i; j++) {
+    			for (int j = 0; j < N; j++) {
     				// Add train edge if exists
     				if (trainEdges[i][j] != 0) {
     					addEdge(i, j, trainEdges[i][j], false, edgeColors[i][j]);
@@ -401,21 +401,20 @@ class MultiGraph {
     	
     		// ISA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     	
-    	
     		String trainEdgesFilename = "TrainEdgesCSV.csv";
 		String walkingEdgesFilename = "WalkingEdgesCSV.csv";
 		String edgeColorsFilename = "EdgeColorsCSV.csv";
 		String stationNamesFilename = "StationNamesCSV.csv";
 		CSVParser parser = new CSVParser(trainEdgesFilename, walkingEdgesFilename, edgeColorsFilename,
 				stationNamesFilename);
-		
+		parser.parse();
 		MultiGraph g = new MultiGraph(parser);
 		Spanner s = new Spanner(g, 2.0);
         
         // ISA -------------------------------------------------------------------------------
-//        MultiGraph sp = s.buildSpanner();
-//        sp.createGraphVis();
-//        sp.displayGraphVis();
+        MultiGraph sp = s.buildSpanner();
+        sp.createGraphVis();
+        sp.displayGraphVis();
 
 //        System.out.println("g " + g.getEdges().size() + " sp " + sp.getEdges().size());
         

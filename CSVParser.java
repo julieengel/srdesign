@@ -27,13 +27,13 @@ public class CSVParser {
 	
 	public void parse() {
 		String currentRelativePath = Paths.get("").toAbsolutePath().toString() + "/src/";
-		//System.out.println("Parsing Names...........");
+		System.out.println("Parsing Names...........");
 		stationNames = parseStationNames(currentRelativePath + stationNamesFilename);
-		//System.out.println("Parsing Train Edges...........");
+		System.out.println("Parsing Train Edges...........");
 		trainEdges = parseEdges(currentRelativePath + trainEdgesFilename);
-		//System.out.println("Parsing Walking Edges...........");
+		System.out.println("Parsing Walking Edges...........");
 		walkingEdges = parseEdges(currentRelativePath + walkingEdgesFilename);
-		//System.out.println("Parsing Edge Colors...........");
+		System.out.println("Parsing Edge Colors...........");
 		edgeColors = parseEdgeColors(currentRelativePath + edgeColorsFilename);
 	}
 	
@@ -217,6 +217,14 @@ public class CSVParser {
 					System.out.println("Walking from " + stationNames.get(i) + 
 							" to " + stationNames.get(j) + " is " +
 							walkingEdges[i][j] + " mins.");
+				}
+			}
+		}
+		
+		for (int i = 0; i < stationNames.size(); i++) {
+			for (int j = 0; j < stationNames.size(); j++) {
+				if (trainEdges[i][j] != 0) {
+					System.out.println(i + "," + j + ",WALK");
 				}
 			}
 		}
