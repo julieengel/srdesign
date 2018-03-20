@@ -6,25 +6,50 @@ class MultiGraph {
     private List<MultiEdge> edges; // all edges
     GraphVis gv;
 
-    public MultiGraph(int n) { // USE THIS CONSTRUCTOR
+    public MultiGraph(int n) { // For random graphs
         N = n;
         nodes = new MultiNode[n];
         for (int i = 0; i < N; i++) {
-            nodes[i] = new MultiNode(i);
+            nodes[i] = new MultiNode(i, "Station " + i);
         }
         edges = new ArrayList<>();
     }
+    
+    public MultiGraph(CSVParser parser) {
+    		N = parser.getN();
+    		// Add nodes
+    		nodes = new MultiNode[N];
+    		for (int i = 0; i < N; i++) {
+    			nodes[i] = new MultiNode(i, parser.getStationNames().get(i));
+    		}
+    		// Use addEdge() function to make the edges
+    		edges = new ArrayList<>();
+    		int[][] trainEdges = parser.getTrainEdges();
+    		int[][] walkingEdges = parser.getWalkingEdges();
+    		Line[][] edgeColors = parser.getEdgeColors();
+    		for (int i = 0; i < N; i++) {
+    			for (int j = 0; j < i; j++) {
+    				// Add train edge if exists
+    				if (trainEdges[i][j] != 0) {
+    					addEdge(i, j, trainEdges[i][j], false, edgeColors[i][j]);
+    				}
+    				if (walkingEdges[i][j] != 0) {
+    					addEdge(i, j, walkingEdges[i][j], true, Line.WALK);
+    				}
+    			}
+    		}
+    }
 
-    public MultiGraph(MultiGraph g) {
+    public MultiGraph(MultiGraph g) { // For spanner copying
         N = g.getSize();
         nodes = new MultiNode[N];
         for (int i = 0; i < N; i++) {
-            nodes[i] = new MultiNode(i);
+            nodes[i] = new MultiNode(i, g.getNodes()[i].getStationName());
         }
         edges = new ArrayList<>();
 
         for (MultiEdge e : g.getEdges()) {
-            addEdge(e.getU(), e.getV(), e.getEdgeWeight());
+            addEdge(e.getU(), e.getV(), e.getEdgeWeight(), e.getWalking(), e.getLine());
         }
     }
 
@@ -32,8 +57,8 @@ class MultiGraph {
         return N;
     }
 
-    public void addEdge(int u, int v, int weight) {
-        MultiEdge newEdge = new MultiEdge(u, v, weight);
+    public void addEdge(int u, int v, int weight, boolean walking, Line line) {
+        MultiEdge newEdge = new MultiEdge(u, v, weight, walking, line);
         addEdge(newEdge);
     }
 
@@ -98,35 +123,35 @@ class MultiGraph {
 
 
     // TODO: dont have any of the randomizing graph and connected stuff transferred over
-    void randomize(double p) {
-        // Build random graph using Erdos-Renyi construction
-        if (p < 0.0 || p > 1.0)
-            throw new IllegalArgumentException("Probability must be between 0 and 1");
-        for (int v = 0; v < N; v++) {
-            for (int u = v + 1; u < N; u++) {
-                if (Math.random() <= p) {
-
-                    // TODO: check if we still want weight 1
-                    addEdge(v, u, 1);
-                }
-            }
-        }
-        // Confirm that each vertex has degree >= 2
-        for (int i = 0; i < N; i++) {
-            int count = nodes[i].getNeighbors().length;
-            while (count < 2) {
-                int randNode = (int) Math.round(Math.random() * (N - 1));
-                while (randNode == i || nodes[i].isNeighbor(randNode)) {
-                    randNode = (int) Math.round(Math.random() * (N - 1));
-                }
-                addEdge(i, randNode, 1);
-                count++;
-            }
-        }
-
-        // TODO: CONFIRM THAT IT'S CONNECTED
-    }
-
+    // Didn't update to include walking or line because we won't need it
+//    void randomize(double p) {
+//        // Build random graph using Erdos-Renyi construction
+//        if (p < 0.0 || p > 1.0)
+//            throw new IllegalArgumentException("Probability must be between 0 and 1");
+//        for (int v = 0; v < N; v++) {
+//            for (int u = v + 1; u < N; u++) {
+//                if (Math.random() <= p) {
+//
+//                    // TODO: check if we still want weight 1
+//                    addEdge(v, u, 1);
+//                }
+//            }
+//        }
+//        // Confirm that each vertex has degree >= 2
+//        for (int i = 0; i < N; i++) {
+//            int count = nodes[i].getNeighbors().length;
+//            while (count < 2) {
+//                int randNode = (int) Math.round(Math.random() * (N - 1));
+//                while (randNode == i || nodes[i].isNeighbor(randNode)) {
+//                    randNode = (int) Math.round(Math.random() * (N - 1));
+//                }
+//                addEdge(i, randNode, 1);
+//                count++;
+//            }
+//        }
+//
+//        // TODO: CONFIRM THAT IT'S CONNECTED
+//    }
 
 
 
@@ -187,13 +212,17 @@ class MultiGraph {
 
 
     // TODO: need to figure this out
+    // CHANGED WITH THE ADDING OF WALKING EDGES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     Set<MultiGraph> generateSpanners() {
         Set<MultiGraph> spanners = new HashSet<MultiGraph>();
         Set<MultiEdge> notRemovedEdges = new HashSet<MultiEdge>();
 
         // Originally, no edges have been seen so add them all to the set
         for (MultiEdge e : edges) {
-            notRemovedEdges.add(e);
+        		if (!e.getWalking()) {
+        			// Only add when it's not a walking edge!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        			notRemovedEdges.add(e);
+        		}
         }
 
         MultiGraph curr = new MultiGraph(this);
@@ -359,30 +388,48 @@ class MultiGraph {
 
 
     public static void main(String[] args) {
-        MultiGraph g = new MultiGraph(5); // REPLACE WITH CONSTRUCTING REAL GRAPH
-        g.randomize(.5); // ^^
+    	
+    		// ISA -------------------------------------------------------------------------------
+    	
+//        MultiGraph g = new MultiGraph(5); // REPLACE WITH CONSTRUCTING REAL GRAPH
+//        g.randomize(.5); // ^^
         //g.assignRandomWeights();
 //        g.printGraphMatrix();
 //        System.out.println();
 //        System.out.println();
 //        System.out.println("     " + g.getNeighbors(0).length);
-
-        Spanner s = new Spanner(g, 2.0);
+    	
+    		// ISA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    	
+    	
+    		String trainEdgesFilename = "TrainEdgesCSV.csv";
+		String walkingEdgesFilename = "WalkingEdgesCSV.csv";
+		String edgeColorsFilename = "EdgeColorsCSV.csv";
+		String stationNamesFilename = "StationNamesCSV.csv";
+		CSVParser parser = new CSVParser(trainEdgesFilename, walkingEdgesFilename, edgeColorsFilename,
+				stationNamesFilename);
+		
+		MultiGraph g = new MultiGraph(parser);
+		Spanner s = new Spanner(g, 2.0);
+        
+        // ISA -------------------------------------------------------------------------------
 //        MultiGraph sp = s.buildSpanner();
 //        sp.createGraphVis();
 //        sp.displayGraphVis();
 
 //        System.out.println("g " + g.getEdges().size() + " sp " + sp.getEdges().size());
+        
+        // ISA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
-        Set<MultiGraph> spanners = g.generateSpanners();
-        for (MultiGraph sp : spanners) {
-            sp.createGraphVis();
-            sp.displayGraphVis();
-        }
-
-        g.createGraphVis();
-        g.displayGraphVis();
+//        Set<MultiGraph> spanners = g.generateSpanners();
+//        for (MultiGraph sp : spanners) {
+//            sp.createGraphVis();
+//            sp.displayGraphVis();
+//        }
+//
+//        g.createGraphVis();
+//        g.displayGraphVis();
     }
 
 }
@@ -392,12 +439,16 @@ class MultiEdge implements Comparable<MultiEdge> {
     private final int u;
     private final int v;
     private final int weight;
+    private final boolean walking;
+    private final Line line;
 
 
-    public MultiEdge(int u, int v, int weight) {
+    public MultiEdge(int u, int v, int weight, boolean walking, Line line) {
         this.u = u;
         this.v = v;
         this.weight = weight;
+        this.walking = walking;
+        this.line = line;
     }
 
     public int getEdgeWeight() {
@@ -410,6 +461,14 @@ class MultiEdge implements Comparable<MultiEdge> {
 
     public int getV() {
         return v;
+    }
+    
+    public boolean getWalking() {
+    		return walking;
+    }
+    
+    public Line getLine() {
+    		return line;
     }
 
     @Override
@@ -440,21 +499,24 @@ class MultiEdge implements Comparable<MultiEdge> {
         MultiEdge e = (MultiEdge) o;
 
         // Compare the data members and return accordingly
-        return (this.u == e.u) && (this.v == e.v) && (this.weight == e.weight);
+        return (this.u == e.u) && (this.v == e.v) && (this.weight == e.weight) 
+        		&& (this.line == e.line) && (this.walking == e.walking);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(u, v, weight);
+        return Objects.hash(u, v, weight, walking, line);
     }
 }
 
 class MultiNode {
     int id;
+    String stationName;
     Map<Integer, List<MultiEdge>> neighbors;
 
-    public MultiNode(int id) {
+    public MultiNode(int id, String stationName) {
         this.id = id;
+        this.stationName = stationName;
         neighbors = new HashMap<>();
     }
 
@@ -490,6 +552,10 @@ class MultiNode {
             output[i] = intArr[i];
         }
         return output;
+    }
+    
+    public String getStationName() {
+    		return stationName;
     }
 
 }
