@@ -9,8 +9,8 @@ import java.util.Map;
 public class CSVParser {
 	public static void main(String[] args) {
 		
-		//String edgeFilename = "TrainTimesCSV.csv";
-		String edgeFilename = "WalkingEdgesCSV.csv";
+		String edgeFilename = "TrainTimesCSV.csv";
+		//String edgeFilename = "WalkingEdgesCSV.csv";
 		parseEdges(edgeFilename, null);
 		
 		String stationNamesFilename = "IDsCSV.csv";
@@ -18,7 +18,7 @@ public class CSVParser {
 		
     }
 	
-	public static void parseEdges(String filename, int[][] am) {
+	public static void parseEdges(String filename, int[][] am) { // make this output some useful structure
 		String currentRelativePath = Paths.get("").toAbsolutePath().toString() + "/src/";
         String csvFile = currentRelativePath + filename;
         BufferedReader br = null;

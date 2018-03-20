@@ -2,11 +2,11 @@ import java.util.*;
 
 class MultiGraph {
     private int N;
-    private MultiNode[] nodes;
-    private List<MultiEdge> edges;
+    private MultiNode[] nodes; // by id
+    private List<MultiEdge> edges; // all edges
     GraphVis gv;
 
-    public MultiGraph(int n) {
+    public MultiGraph(int n) { // USE THIS CONSTRUCTOR
         N = n;
         nodes = new MultiNode[n];
         for (int i = 0; i < N; i++) {
@@ -245,9 +245,10 @@ class MultiGraph {
         }
         return spanners;
     }
-
-
-
+    
+    // Attribute for line color
+    public enum Line {RED, GREEN, BLUE, ORANGE, BROWN, YELLOW};
+    
 
     // ----------- GRAPH VIS ------------
 
@@ -361,8 +362,8 @@ class MultiGraph {
 
 
     public static void main(String[] args) {
-        MultiGraph g = new MultiGraph(5);
-        g.randomize(.5);
+        MultiGraph g = new MultiGraph(5); // REPLACE WITH CONSTRUCTING REAL GRAPH
+        g.randomize(.5); // ^^
         //g.assignRandomWeights();
 //        g.printGraphMatrix();
 //        System.out.println();
@@ -396,6 +397,7 @@ class MultiEdge implements Comparable<MultiEdge> {
     private final int u;
     private final int v;
     private final int weight;
+
 
     public MultiEdge(int u, int v, int weight) {
         this.u = u;
