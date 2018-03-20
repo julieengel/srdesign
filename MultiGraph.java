@@ -187,7 +187,7 @@ class MultiGraph {
 
 
     // TODO: need to figure this out
-    Set<MultiGraph> generateSpanners() {
+    public Set<MultiGraph> generateSpanners() {
         Set<MultiGraph> spanners = new HashSet<MultiGraph>();
         Set<MultiEdge> notRemovedEdges = new HashSet<MultiEdge>();
 
@@ -244,6 +244,19 @@ class MultiGraph {
 
         }
         return spanners;
+    }
+
+
+    // TODO: BE CAREFUL OF WALKING EDGES ONCE MERGED
+    public Set<Set<MultiEdge>> generateMaintenanceSets(Set<MultiGraph> spanners) {
+        Set<Set<MultiEdge>> sets = new HashSet<>();
+        for (MultiGraph s : spanners) {
+            Set<MultiEdge> subset = new HashSet<>();
+            MultiGraph complement = subtractGraph(s);
+            subset.addAll(complement.getEdges());
+            sets.add(subset);
+        }
+        return sets;
     }
 
 
@@ -385,6 +398,8 @@ class MultiGraph {
 
         g.createGraphVis();
         g.displayGraphVis();
+
+        GraphIO.outputMaintenanceSets(g.generateMaintenanceSets(spanners));
     }
 
 }
