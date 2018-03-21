@@ -3,11 +3,33 @@ import java.util.*;
 
 public class GraphIO {
 
+
+    /*
+     * Output file format:
+     *
+     * 1.5,13   // this is the c-value,additive-value that was used to generate all the spanners
+     *
+     * 4        // this is the number of u,v pairs in the coming maintenence set (they will be listed right below)
+     * 1,3
+     * 3,5
+     * 2,5
+     * 4,6
+     *
+     * 2        // once you have read through one whole set, there will be \n then a new count for the next set
+     * 3,2
+     * 4,1
+     *
+     *
+     */
     public static void outputMaintenanceSets(Set<Set<MultiEdge>> sets) {
         if (sets == null) { return; }
 
         try {
             BufferedWriter outputStream = new BufferedWriter(new FileWriter("allMaintenanceSets.txt"));
+
+            outputStream.write("" + 1.5 + "," + 13);
+            outputStream.newLine();
+            outputStream.newLine();
 
             for (Set<MultiEdge> set : sets) {
 
