@@ -262,7 +262,7 @@ class MultiGraph {
 
     // TODO: need to figure this out
     // CHANGED WITH THE ADDING OF WALKING EDGES!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    public Set<MultiGraph> generateSpanners() {
+    public Set<MultiGraph> generateSpanners(double coefficient, double baseline) {
         Set<MultiGraph> spanners = new HashSet<MultiGraph>();
         Set<MultiEdge> notRemovedEdges = new HashSet<MultiEdge>();
 
@@ -277,7 +277,7 @@ class MultiGraph {
         MultiGraph curr = new MultiGraph(this);
 
         // Generate the first spanner
-        Spanner spanner = new Spanner(this, 1.5);
+        Spanner spanner = new Spanner(this, coefficient, baseline);
         MultiGraph firstSpanner = spanner.buildSpanner();
         spanners.add(firstSpanner);
 
@@ -314,6 +314,13 @@ class MultiGraph {
             if (notRemovedEdges.size() == notRemovedPrevCount) {
                 System.out.println("HAD TO EXIT");
                 System.out.println("NOT REMOVED = " + notRemovedPrevCount);
+                for (MultiEdge edge : notRemovedEdges) {
+                    int u = edge.getU();
+                    int v = edge.getV();
+                    System.out.println("" + u + " - " + v + " : "
+                            + nodes[u].getStationName() + " - " + nodes[v].getStationName()
+                            + " : " + edge.getEdgeWeight() + " min");
+                }
                 break;
             } else {
                 notRemovedPrevCount = notRemovedEdges.size();
@@ -335,7 +342,6 @@ class MultiGraph {
                     subset.add(e);
                 }
             }
-            //subset.addAll(complement.getEdges());
             sets.add(subset);
         }
         return sets;
@@ -453,21 +459,55 @@ class MultiGraph {
     }
 
 
+    public void testAlgo(int u, int v, Set<MultiGraph> spanners) {
+        if (u < 0 || v < 0 || u >= N || v >= N) {
+            System.out.println("Invalid u or v");
+            return;
+        }
+
+        double coefficient = 1.5;
+        double baseline = 15;
+
+//        Set<MultiGraph> spanners = this.generateSpanners(coefficient, baseline);
+//        Set<Set<MultiEdge>> sets = this.generateMaintenanceSets(spanners);
+
+        int count = 0;
+        for (MultiGraph spanner : spanners) {
+            System.out.println("SPANNER #" + count);
+            count++;
+
+
+            System.out.println("Route from " + u + " to " + v);
+
+            System.out.println("Original time: " + this.getDistance(u, v));
+            System.out.println("New time: " + spanner.getDistance(u, v));
+
+            List<Integer> path = this.getPathFromTo(u, v);
+            System.out.print("Old path:");
+            for (int i = 0; i < path.size(); i++) {
+                System.out.print(" " + path.get(i));
+            }
+            System.out.println();
+
+            path = spanner.getPathFromTo(u, v);
+            System.out.print("New path:");
+            for (int i = 0; i < path.size(); i++) {
+                System.out.print(" " + path.get(i));
+            }
+            System.out.println();
+
+            System.out.println();
+        }
+    }
+
+
 
 
     public static void main(String[] args) {
+        // baseline 20 works, 14 makes an extra spanner
+        double coefficient = 2.5;
+        double additive = 5;
 
-        // ISA -------------------------------------------------------------------------------
-
-//        MultiGraph g = new MultiGraph(5); // REPLACE WITH CONSTRUCTING REAL GRAPH
-//        g.randomize(.5); // ^^
-        //g.assignRandomWeights();
-//        g.printGraphMatrix();
-//        System.out.println();
-//        System.out.println();
-//        System.out.println("     " + g.getNeighbors(0).length);
-
-        // ISA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
         String trainEdgesFilename = "TrainEdgesCSV.csv";
         String walkingEdgesFilename = "WalkingEdgesCSV.csv";
@@ -477,19 +517,14 @@ class MultiGraph {
                 stationNamesFilename);
         parser.parse();
         MultiGraph g = new MultiGraph(parser);
-        Spanner s = new Spanner(g, 2.0);
 
-        // ISA -------------------------------------------------------------------------------
-//        MultiGraph sp = s.buildSpanner();
-////        sp.createGraphVis();
-////        sp.displayGraphVis();
-
-//        System.out.println("g " + g.getEdges().size() + " sp " + sp.getEdges().size());
-
-        // ISA ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        // remove later
+        Line line = g.getEdge(34, 35).getLine();
+        g.removeEdge(34, 35, 1);
+        g.addEdge(34, 35, 2, false, line);
 
 
-        Set<MultiGraph> spanners = g.generateSpanners();
+        Set<MultiGraph> spanners = g.generateSpanners(coefficient, additive);
         for (MultiGraph sp : spanners) {
             sp.createGraphVis();
             sp.displayGraphVis();
@@ -498,8 +533,31 @@ class MultiGraph {
         g.createGraphVis();
         g.displayGraphVis();
 
-        //GraphIO.outputMaintenanceSets(g.generateMaintenanceSets(spanners));
+        GraphIO.outputMaintenanceSets(g.generateMaintenanceSets(spanners), coefficient, additive);
 
+        // problem old time 11 min new time 17 min why
+        g.testAlgo(7, 15, spanners);
+        g.testAlgo(9, 19, spanners);
+        g.testAlgo(34, 35, spanners);
+
+//        MultiGraph ugh = new MultiGraph(g);
+//        ugh.removeEdge(34, 35, 1);
+//        System.out.println(ugh.getDistance(34, 35));
+//
+//        for (MultiGraph spanner : spanners) {
+//            ugh = spanner;
+//
+//            for (int k = 0; k < ugh.getSize(); k++) {
+//                for (int l = k + 1; l < ugh.getSize(); l++) {
+//                    System.out.println("old: " + g.getDistance(k, l) + " new: " + ugh.getDistance(k, l));
+//                }
+//            }
+//
+//            System.out.println();
+//        }
+
+
+        // debugging and info prints
         int count = 0;
         Set<Set<MultiEdge>> sets = g.generateMaintenanceSets(spanners);
         for (Set<MultiEdge> set : sets) {

@@ -21,13 +21,14 @@ public class GraphIO {
      *
      *
      */
-    public static void outputMaintenanceSets(Set<Set<MultiEdge>> sets) {
+    public static void outputMaintenanceSets(Set<Set<MultiEdge>> sets, double coefficient, double additive) {
         if (sets == null) { return; }
 
         try {
-            BufferedWriter outputStream = new BufferedWriter(new FileWriter("allMaintenanceSets.txt"));
+            BufferedWriter outputStream = new BufferedWriter(new FileWriter(
+                    "allMaintenanceSets_" + coefficient + "_" + (int) additive + ".txt"));
 
-            outputStream.write("" + 1.5 + "," + 13);
+            outputStream.write("" + coefficient + "," + additive);
             outputStream.newLine();
             outputStream.newLine();
 
